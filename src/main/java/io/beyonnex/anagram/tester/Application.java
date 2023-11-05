@@ -5,10 +5,9 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -68,35 +67,28 @@ public class Application {
             }
         }
         System.out.println("True");
-        ANAGRAMS.computeIfAbsent(leftText, text -> new HashSet<>()).add(rightText);
-        ANAGRAMS.computeIfAbsent(rightText, text -> new HashSet<>()).add(leftText);
-        insertAnagrams(leftText);
-        insertAnagrams(rightText);
+        addEdge(leftText, rightText);
     }
 
-    private static void print(String text) {
-        Set<String> anagrams = ANAGRAMS.get(text);
-        if (anagrams == null) {
+    private static void print(String rootText) {
+        if (!ANAGRAMS.containsKey(rootText)) {
             return;
         }
-        anagrams.forEach(System.out::println);
-    }
-
-    private static void insertAnagrams(String leftText) {
-        Set<String> visited = new LinkedHashSet<>();
-        Queue<String> queue = new LinkedList<>();
-        queue.add(leftText);
+        Set<String> visited = new HashSet<>();
+        Queue<String> queue = new ArrayDeque<>();
+        queue.add(rootText);
+        visited.add(rootText);
         while (!queue.isEmpty()) {
             String text = queue.poll();
             for (String anagram : ANAGRAMS.get(text)) {
-                if (!visited.contains(anagram)) {
-                    visited.add(anagram);
-                    queue.add(anagram);
+                if (visited.contains(anagram)) {
+                    continue;
                 }
+                System.out.println(anagram);
+                visited.add(anagram);
+                queue.add(anagram);
             }
         }
-        ANAGRAMS.get(leftText).addAll(visited);
-        visited.forEach(text -> ANAGRAMS.get(text).add(leftText));
     }
 
     private static Map<Character, Integer> parseText(String text) {
@@ -110,6 +102,11 @@ public class Application {
             result.compute(aChar, (character, quantity) -> quantity != null ? ++quantity : 1);
         }
         return result;
+    }
+
+    private static void addEdge(String leftText, String rightText) {
+        ANAGRAMS.computeIfAbsent(leftText, text -> new HashSet<>()).add(rightText);
+        ANAGRAMS.computeIfAbsent(rightText, text -> new HashSet<>()).add(leftText);
     }
 
     private static void help() {
